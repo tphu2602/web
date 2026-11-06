@@ -43,19 +43,18 @@ Hãy hình dung ${t} giống như cách chúng ta giải quyết một tình hu�
 - Đừng chỉ học vẹt lý thuyết, hãy tự viết lại định nghĩa bằng ngôn ngữ của chính mình và kết hợp xem video hướng dẫn bên dưới nhé!`;
 };
 
-// Danh sách các bảng màu cá nhân hóa để cậu lựa chọn
+// Các bảng màu chủ đề (Đồng bộ toàn bộ giao diện và màu nền web)
 const themes = [
-  { name: "Cổ điển (Dark)", primary: "#1A202C", indicator: "#3182CE", bg: "#F8F9FA" },
-  { name: "Xanh dương (Blue)", primary: "#0066CC", indicator: "#0052A3", bg: "#F0F5FF" },
-  { name: "Tím nghiên cứu (Purple)", primary: "#6B46C1", indicator: "#805AD5", bg: "#FAF5FF" },
-  { name: "Xanh lá mạ (Green)", primary: "#2F855A", indicator: "#38A169", bg: "#F0FFF4" },
-  { name: "Cam năng động (Orange)", primary: "#C05621", indicator: "#DD6B20", bg: "#FFFAF0" },
+  { name: "Cổ điển", primary: "#1A202C", bg: "#F8F9FA" },
+  { name: "Xanh dương", primary: "#0066CC", bg: "#F0F5FF" },
+  { name: "Tím nghiên cứu", primary: "#6B46C1", bg: "#FAF5FF" },
+  { name: "Xanh lá mạ", primary: "#2F855A", bg: "#F0FFF4" },
+  { name: "Cam năng động", primary: "#C05621", bg: "#FFFAF0" },
 ];
 
 export default function StudyDiary() {
-  const [activeTab, setActiveTab] = useState("diary"); // "diary" hoặc "timetable"
+  const [activeTab, setActiveTab] = useState("diary");
   
-  // Lưu màu chủ đề vào localStorage để giữ nguyên khi F5
   const [currentTheme, setCurrentTheme] = useState(() => {
     const saved = localStorage.getItem("study_diary_theme");
     return saved ? JSON.parse(saved) : themes[0];
@@ -84,7 +83,6 @@ export default function StudyDiary() {
   const [ttSubject, setTtSubject] = useState("");
   const [ttRoom, setTtRoom] = useState("");
 
-  // Thêm môn học
   const handleAddSubject = (e) => {
     e.preventDefault();
     if (!newSubjectName.trim()) return;
@@ -173,7 +171,6 @@ export default function StudyDiary() {
     setExpandedEntries(prev => ({ ...prev, [entryId]: !prev[entryId] }));
   };
 
-  // Thêm lịch học vào thời khóa biểu
   const handleAddTimetable = (e) => {
     e.preventDefault();
     if (!ttSubject.trim()) return;
@@ -204,10 +201,12 @@ export default function StudyDiary() {
     return { ...sub, entries: filteredEntries };
   }).filter(sub => sub.name.toLowerCase().includes(searchTerm.toLowerCase()) || sub.entries.length > 0);
 
+  // Nhóm các tiết học theo từng ngày trong tuần để vẽ bảng Thời khóa biểu trực quan
+  const daysOfWeek = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
+
   return (
     <div style={{ ...styles.container, backgroundColor: currentTheme.bg }}>
       <header style={styles.header}>
-        {/* THANH CÁ NHÂN HÓA MÀU SẮC & CHUYỂN TAB */}
         <div style={styles.topBar}>
           <div style={styles.tabSwitchers}>
             <button 
@@ -219,7 +218,7 @@ export default function StudyDiary() {
                 borderColor: currentTheme.primary
               }}
             >
-              📖 Nhật ký học tập
+              Nhật ký học tập
             </button>
             <button 
               onClick={() => setActiveTab("timetable")} 
@@ -230,11 +229,10 @@ export default function StudyDiary() {
                 borderColor: currentTheme.primary
               }}
             >
-              📅 Thời khóa biểu
+              Thời khóa biểu
             </button>
           </div>
 
-          {/* Chọn màu chủ đề */}
           <div style={styles.themePicker}>
             <span style={styles.themeLabel}>Màu chủ đề:</span>
             <div style={styles.themeColorsRow}>
@@ -254,7 +252,6 @@ export default function StudyDiary() {
           </div>
         </div>
 
-        <div style={styles.headerBadge}>Workspace cá nhân</div>
         <h1 style={styles.headerTitle}>Nhật ký Học tập & Lịch trình</h1>
         <p style={styles.headerSubtitle}>Học đi nếu kh muốn rớt môn</p>
 
@@ -284,7 +281,7 @@ export default function StudyDiary() {
         )}
       </header>
 
-      {/* NỘI DUNG TAB 1: NHẬT KÝ HỌC TẬP */}
+      {/* TAB 1: NHẬT KÝ HỌC TẬP */}
       {activeTab === "diary" && (
         <div style={styles.subjectsGrid}>
           {filteredSubjects.length === 0 ? (
@@ -299,7 +296,7 @@ export default function StudyDiary() {
                 <div key={sub.id} style={styles.subjectCard}>
                   <div style={styles.subjectHeader}>
                     <div style={styles.subjectTitleWrapper}>
-                      <span style={{ ...styles.subjectIndicator, backgroundColor: currentTheme.indicator }}></span>
+                      <span style={{ ...styles.subjectIndicator, backgroundColor: currentTheme.primary }}></span>
                       <h2 style={styles.subjectTitle}>{sub.name}</h2>
                     </div>
                     <div style={styles.subjectHeaderActions}>
@@ -424,18 +421,18 @@ export default function StudyDiary() {
         </div>
       )}
 
-      {/* NỘI DUNG TAB 2: THỜI KHÓA BIỂU */}
+      {/* TAB 2: THỜI KHÓA BIỂU DẠNG BẢNG TRỰC QUAN */}
       {activeTab === "timetable" && (
         <div style={styles.timetableContainer}>
           <div style={styles.subjectCard}>
-            <h2 style={styles.subjectTitle}>Thêm lịch học mới</h2>
+            <h2 style={styles.subjectTitle}>Thêm tiết học mới</h2>
             <form onSubmit={handleAddTimetable} style={styles.ttForm}>
               <select 
                 value={ttDay} 
                 onChange={(e) => setTtDay(e.target.value)}
                 style={styles.input}
               >
-                {["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"].map((d, i) => (
+                {daysOfWeek.map((d, i) => (
                   <option key={i} value={d}>{d}</option>
                 ))}
               </select>
@@ -461,43 +458,52 @@ export default function StudyDiary() {
                 style={styles.input}
               />
               <button type="submit" style={{ ...styles.buttonPrimary, backgroundColor: currentTheme.primary }}>
-                Thêm lịch học
+                Thêm vào lịch
               </button>
             </form>
           </div>
 
+          {/* BẢNG THỜI KHÓA BIỂU TRỰC QUAN THEO TUẦN */}
           <div style={styles.subjectCard}>
-            <h2 style={styles.subjectTitle}>Lịch học trong tuần của cậu</h2>
+            <h2 style={styles.subjectTitle}>Thời khóa biểu tổng quan</h2>
             {timetable.length === 0 ? (
               <p style={styles.emptyText}>Chưa có lịch học nào được thêm.</p>
             ) : (
-              <div style={styles.ttTableWrapper}>
-                <table style={styles.ttTable}>
-                  <thead>
-                    <tr style={styles.ttTrHead}>
-                      <th style={styles.ttTh}>Thứ</th>
-                      <th style={styles.ttTh}>Thời gian</th>
-                      <th style={styles.ttTh}>Môn học</th>
-                      <th style={styles.ttTh}>Phòng học</th>
-                      <th style={styles.ttTh}>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {timetable.map((item) => (
-                      <tr key={item.id} style={styles.ttTr}>
-                        <td style={styles.ttTd}><span style={styles.dateText}>{item.day}</span></td>
-                        <td style={styles.ttTd}>{item.time}</td>
-                        <td style={{ ...styles.ttTd, fontWeight: '600' }}>{item.subject}</td>
-                        <td style={styles.ttTd}>{item.room}</td>
-                        <td style={styles.ttTd}>
-                          <button onClick={() => handleDeleteTimetable(item.id)} style={styles.deleteBtn}>
-                            Xóa
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div style={styles.gridTableWrapper}>
+                <div style={styles.gridTableHeader}>
+                  {daysOfWeek.map((day, idx) => (
+                    <div key={idx} style={{ ...styles.gridColHeader, backgroundColor: currentTheme.primary }}>
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                <div style={styles.gridTableBody}>
+                  {daysOfWeek.map((day, idx) => {
+                    const dayItems = timetable.filter(item => item.day === day);
+                    return (
+                      <div key={idx} style={styles.gridColCell}>
+                        {dayItems.length === 0 ? (
+                          <span style={styles.noClassText}>Trống</span>
+                        ) : (
+                          dayItems.map(item => (
+                            <div key={item.id} style={styles.classCardItem}>
+                              <div style={styles.classTime}>{item.time}</div>
+                              <div style={styles.classSubject}>{item.subject}</div>
+                              <div style={styles.classRoom}>{item.room}</div>
+                              <button 
+                                onClick={() => handleDeleteTimetable(item.id)} 
+                                style={styles.classDeleteBtn}
+                                title="Xóa tiết học"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -509,7 +515,7 @@ export default function StudyDiary() {
 
 const styles = {
   container: {
-    maxWidth: '920px',
+    maxWidth: '1000px',
     margin: '0 auto',
     padding: '40px 24px',
     minHeight: '100vh',
@@ -873,28 +879,78 @@ const styles = {
     gap: '12px',
     marginTop: '12px'
   },
-  ttTableWrapper: {
+  gridTableWrapper: {
+    marginTop: '16px',
     overflowX: 'auto',
-    marginTop: '12px'
+    border: '1px solid #E2E8F0',
+    borderRadius: '12px',
+    backgroundColor: '#FAFAFA'
   },
-  ttTable: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    textAlign: 'left',
-    fontSize: '14px'
+  gridTableHeader: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(7, minmax(130px, 1fr))',
+    borderBottom: '1px solid #E2E8F0'
   },
-  ttTrHead: {
-    borderBottom: '2px solid #E2E8F0',
+  gridColHeader: {
+    padding: '12px 8px',
+    color: '#FFFFFF',
+    fontWeight: '700',
+    textAlign: 'center',
+    fontSize: '13px',
+    borderRight: '1px solid rgba(255,255,255,0.2)'
+  },
+  gridTableBody: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(7, minmax(130px, 1fr))',
+    minHeight: '200px'
+  },
+  gridColCell: {
+    padding: '10px',
+    borderRight: '1px solid #E2E8F0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
+  noClassText: {
+    color: '#A0AEC0',
+    fontSize: '12px',
+    textAlign: 'center',
+    marginTop: '20px',
+    fontStyle: 'italic'
+  },
+  classCardItem: {
+    backgroundColor: '#FFFFFF',
+    padding: '10px',
+    borderRadius: '8px',
+    border: '1px solid #CBD5E0',
+    position: 'relative',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+  },
+  classTime: {
+    fontSize: '11px',
+    fontWeight: '600',
+    color: '#718096',
+    marginBottom: '2px'
+  },
+  classSubject: {
+    fontSize: '13px',
+    fontWeight: '700',
+    color: '#1A202C',
+    marginBottom: '4px'
+  },
+  classRoom: {
+    fontSize: '11px',
     color: '#4A5568'
   },
-  ttTh: {
-    padding: '10px 12px',
-    fontWeight: '700'
-  },
-  ttTr: {
-    borderBottom: '1px solid #EDF2F7'
-  },
-  ttTd: {
-    padding: '12px'
+  classDeleteBtn: {
+    position: 'absolute',
+    top: '4px',
+    right: '6px',
+    background: 'none',
+    border: 'none',
+    color: '#E53E3E',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    cursor: 'pointer'
   }
 };
