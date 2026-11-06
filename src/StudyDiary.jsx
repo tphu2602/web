@@ -43,7 +43,6 @@ Hãy hình dung ${t} giống như cách chúng ta giải quyết một tình hu�
 - Đừng chỉ học vẹt lý thuyết, hãy tự viết lại định nghĩa bằng ngôn ngữ của chính mình và kết hợp xem video hướng dẫn bên dưới nhé!`;
 };
 
-// Các bảng màu chủ đề (Đồng bộ toàn bộ giao diện và màu nền web)
 const themes = [
   { name: "Cổ điển", primary: "#1A202C", bg: "#F8F9FA" },
   { name: "Xanh dương", primary: "#0066CC", bg: "#F0F5FF" },
@@ -201,7 +200,6 @@ export default function StudyDiary() {
     return { ...sub, entries: filteredEntries };
   }).filter(sub => sub.name.toLowerCase().includes(searchTerm.toLowerCase()) || sub.entries.length > 0);
 
-  // Nhóm các tiết học theo từng ngày trong tuần để vẽ bảng Thời khóa biểu trực quan
   const daysOfWeek = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
 
   return (
@@ -252,6 +250,7 @@ export default function StudyDiary() {
           </div>
         </div>
 
+        <div style={styles.headerBadge}>Workspace cá nhân</div>
         <h1 style={styles.headerTitle}>Nhật ký Học tập & Lịch trình</h1>
         <p style={styles.headerSubtitle}>Học đi nếu kh muốn rớt môn</p>
 
@@ -330,7 +329,7 @@ export default function StudyDiary() {
                         />
                         <input 
                           type="text"
-                          placeholder="Nhập tiêu đề bài học"
+                          placeholder="Nhập tiêu đề bài học (AI tự động viết nội dung)..."
                           value={newTitle}
                           onChange={handleTitleChange}
                           style={{ ...styles.input, flex: 1 }}
@@ -421,7 +420,7 @@ export default function StudyDiary() {
         </div>
       )}
 
-      {/* TAB 2: THỜI KHÓA BIỂU DẠNG BẢNG TRỰC QUAN */}
+      {/* TAB 2: THỜI KHÓA BIỂU */}
       {activeTab === "timetable" && (
         <div style={styles.timetableContainer}>
           <div style={styles.subjectCard}>
@@ -463,7 +462,6 @@ export default function StudyDiary() {
             </form>
           </div>
 
-          {/* BẢNG THỜI KHÓA BIỂU TRỰC QUAN THEO TUẦN */}
           <div style={styles.subjectCard}>
             <h2 style={styles.subjectTitle}>Thời khóa biểu tổng quan</h2>
             {timetable.length === 0 ? (
@@ -597,18 +595,22 @@ const styles = {
     fontSize: '15px',
     margin: '0 0 20px 0'
   },
+  // CĂN CHỈNH ĐỘ RỘNG THẲNG HÀNG TUYỆT ĐỐI CHO CẢ 2 Ô
   headerActions: {
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
-    maxWidth: '600px',
+    width: '100%',
+    maxWidth: '640px',
     margin: '0 auto'
   },
   inlineForm: {
     display: 'flex',
-    gap: '10px'
+    gap: '10px',
+    width: '100%'
   },
   input: {
+    flex: 1,
     padding: '12px 16px',
     borderRadius: '8px',
     border: '1px solid #E2E8F0',
@@ -624,7 +626,8 @@ const styles = {
     border: '1px solid #E2E8F0',
     backgroundColor: '#FFFFFF',
     fontSize: '14px',
-    outline: 'none'
+    outline: 'none',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
   },
   textarea: {
     width: '100%',
@@ -646,7 +649,8 @@ const styles = {
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    whiteSpace: 'nowrap'
   },
   buttonSecondary: {
     padding: '8px 14px',
