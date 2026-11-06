@@ -330,7 +330,7 @@ export default function StudyDiary() {
                         />
                         <input 
                           type="text"
-                          placeholder="Nhập tiêu đề bài học (AI tự động viết nội dung)..."
+                          placeholder="Nhập tiêu đề bài học"
                           value={newTitle}
                           onChange={handleTitleChange}
                           style={{ ...styles.input, flex: 1 }}
