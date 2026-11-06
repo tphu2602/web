@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const initialSubjects = [
+const defaultSubjects = [
   {
     id: 1,
     name: "Lập trình Hướng đối tượng (OOP)",
@@ -20,7 +20,7 @@ Tính đóng gói là một trong bốn trụ cột cơ bản của Lập trình
   }
 ];
 
-const initialTimetable = [
+const defaultTimetable = [
   { id: 1, day: "Thứ Hai", time: "07:00 - 11:15", subject: "Lập trình Hướng đối tượng (OOP)", room: "Phòng thực hành A2.1" },
   { id: 2, day: "Thứ Tư", time: "13:30 - 17:00", subject: "Cấu trúc dữ liệu và Giải thuật", room: "Phòng lý thuyết B3.4" },
 ];
@@ -52,19 +52,85 @@ const themes = [
 ];
 
 export default function StudyDiary() {
-  const [activeTab, setActiveTab] = useState("diary");
-  
-  const [currentTheme, setCurrentTheme] = useState(() => {
-    const saved = localStorage.getItem("study_diary_theme");
-    return saved ? JSON.parse(saved) : themes[0];
+  // Quản lý trạng thái tài khoản đang đăng nhập
+  const [currentUser, setCurrentUser] = useState(() => {
+    return localStorage.getItem("study_diary_current_user") || null;
   });
 
-  useEffect(() => {
-    localStorage.setItem("study_diary_theme", JSON.stringify(currentTheme));
-  }, [currentTheme]);
+  const [authMode, setAuthMode] = useState("login"); // "login" hoặc "register"
+  const [usernameInput, setUsernameInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [authError, setAuthError] = useState("");
 
-  const [subjects, setSubjects] = useState(initialSubjects);
-  const [timetable, setTimetable] = useState(initialTimetable);
+  const [activeTab, setActiveTab] = useState("diary");
+
+  // Dữ liệu cá nhân hóa theo tài khoản hiện tại
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    const user = localStorage.getItem("study_diary_current_user");
+    if (user) {
+      const savedTheme = localStorage.getItem(`study_diary_theme_${user}`);
+      if (savedTheme) return JSON.parse(savedTheme);
+    }
+    return themes[0];
+  });
+
+  const [subjects, setSubjects] = useState(() => {
+    const user = localStorage.getItem("study_diary_current_user");
+    if (user) {
+      const saved = localStorage.getItem(`study_diary_subjects_${user}`);
+      if (saved) return JSON.parse(saved);
+    }
+    return defaultSubjects;
+  });
+
+  const [timetable, setTimetable] = useState(() => {
+    const user = localStorage.getItem("study_diary_current_user");
+    if (user) {
+      const saved = localStorage.getItem(`study_diary_timetable_${user}`);
+      if (saved) return JSON.parse(saved);
+    }
+    return defaultTimetable;
+  });
+
+  // Khi chuyển tài khoản hoặc đăng nhập thành công, load lại dữ liệu tương ứng của user đó
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem("study_diary_current_user", currentUser);
+      
+      const savedTheme = localStorage.getItem(`study_diary_theme_${currentUser}`);
+      if (savedTheme) setCurrentTheme(JSON.parse(savedTheme));
+
+      const savedSubs = localStorage.getItem(`study_diary_subjects_${currentUser}`);
+      if (savedSubs) setSubjects(JSON.parse(savedSubs));
+      else setSubjects(defaultSubjects);
+
+      const savedTt = localStorage.getItem(`study_diary_timetable_${currentUser}`);
+      if (savedTt) setTimetable(JSON.parse(savedTt));
+      else setTimetable(defaultTimetable);
+    } else {
+      localStorage.removeItem("study_diary_current_user");
+    }
+  }, [currentUser]);
+
+  // Tự động lưu dữ liệu riêng cho tài khoản đang hoạt động
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`study_diary_theme_${currentUser}`, JSON.stringify(currentTheme));
+    }
+  }, [currentTheme, currentUser]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`study_diary_subjects_${currentUser}`, JSON.stringify(subjects));
+    }
+  }, [subjects, currentUser]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`study_diary_timetable_${currentUser}`, JSON.stringify(timetable));
+    }
+  }, [timetable, currentUser]);
+
   const [newSubjectName, setNewSubjectName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeSubjectId, setActiveSubjectId] = useState(null);
@@ -81,6 +147,46 @@ export default function StudyDiary() {
   const [ttTime, setTtTime] = useState("");
   const [ttSubject, setTtSubject] = useState("");
   const [ttRoom, setTtRoom] = useState("");
+
+  // Xử lý Đăng ký / Đăng nhập
+  const handleAuthSubmit = (e) => {
+    e.preventDefault();
+    setAuthError("");
+    const user = usernameInput.trim();
+    const pass = passwordInput.trim();
+
+    if (!user || !pass) {
+      setAuthError("Vui lòng nhập đầy đủ tên tài khoản và mật khẩu!");
+      return;
+    }
+
+    const usersDb = JSON.parse(localStorage.getItem("study_diary_users_db") || "{}");
+
+    if (authMode === "register") {
+      if (usersDb[user]) {
+        setAuthError("Tên tài khoản này đã tồn tại, vui lòng chọn tên khác!");
+        return;
+      }
+      // Lưu tài khoản mới
+      usersDb[user] = pass;
+      localStorage.setItem("study_diary_users_db", JSON.stringify(usersDb));
+      setCurrentUser(user);
+    } else {
+      // Đăng nhập
+      if (!usersDb[user] || usersDb[user] !== pass) {
+        setAuthError("Tên tài khoản hoặc mật khẩu không chính xác!");
+        return;
+      }
+      setCurrentUser(user);
+    }
+    setUsernameInput("");
+    setPasswordInput("");
+  };
+
+  const handleLogout = () => {
+    if (!window.confirm("Cậu có muốn đăng xuất tài khoản không?")) return;
+    setCurrentUser(null);
+  };
 
   const handleAddSubject = (e) => {
     e.preventDefault();
@@ -202,6 +308,55 @@ export default function StudyDiary() {
 
   const daysOfWeek = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
 
+  // Nếu chưa đăng nhập, hiển thị màn hình Đăng nhập / Đăng ký
+  if (!currentUser) {
+    return (
+      <div style={styles.authContainer}>
+        <div style={styles.authCard}>
+          <div style={styles.headerBadge}>Workspace cá nhân</div>
+          <h1 style={styles.authTitle}>Nhật ký Học tập</h1>
+          <p style={styles.authSubtitle}>Đăng nhập để quản lý không gian học tập riêng của cậu</p>
+
+          <div style={styles.authTabs}>
+            <button 
+              onClick={() => { setAuthMode("login"); setAuthError(""); }} 
+              style={{ ...styles.authTabBtn, borderBottom: authMode === "login" ? '2px solid #1A202C' : '2px solid transparent', fontWeight: authMode === "login" ? '700' : '500' }}
+            >
+              Đăng nhập
+            </button>
+            <button 
+              onClick={() => { setAuthMode("register"); setAuthError(""); }} 
+              style={{ ...styles.authTabBtn, borderBottom: authMode === "register" ? '2px solid #1A202C' : '2px solid transparent', fontWeight: authMode === "register" ? '700' : '500' }}
+            >
+              Đăng ký tài khoản
+            </button>
+          </div>
+
+          <form onSubmit={handleAuthSubmit} style={styles.authForm}>
+            {authError && <div style={styles.errorMsg}>{authError}</div>}
+            <input 
+              type="text"
+              placeholder="Tên tài khoản..."
+              value={usernameInput}
+              onChange={(e) => setUsernameInput(e.target.value)}
+              style={styles.input}
+            />
+            <input 
+              type="password"
+              placeholder="Mật khẩu..."
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              style={styles.input}
+            />
+            <button type="submit" style={styles.authSubmitBtn}>
+              {authMode === "login" ? "Vào không gian học tập" : "Tạo tài khoản mới"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ ...styles.container, backgroundColor: currentTheme.bg }}>
       <header style={styles.header}>
@@ -231,21 +386,28 @@ export default function StudyDiary() {
             </button>
           </div>
 
-          <div style={styles.themePicker}>
-            <span style={styles.themeLabel}>Màu chủ đề:</span>
-            <div style={styles.themeColorsRow}>
-              {themes.map((th, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentTheme(th)}
-                  style={{
-                    ...styles.colorDot,
-                    backgroundColor: th.primary,
-                    border: currentTheme.primary === th.primary ? '2px solid #000' : '2px solid transparent'
-                  }}
-                  title={th.name}
-                />
-              ))}
+          <div style={styles.topRightControls}>
+            <div style={styles.userBadgeInfo}>
+              👤 <b>{currentUser}</b>
+              <button onClick={handleLogout} style={styles.logoutBtn}>Đăng xuất</button>
+            </div>
+
+            <div style={styles.themePicker}>
+              <span style={styles.themeLabel}>Màu:</span>
+              <div style={styles.themeColorsRow}>
+                {themes.map((th, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentTheme(th)}
+                    style={{
+                      ...styles.colorDot,
+                      backgroundColor: th.primary,
+                      border: currentTheme.primary === th.primary ? '2px solid #000' : '2px solid transparent'
+                    }}
+                    title={th.name}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -512,6 +674,76 @@ export default function StudyDiary() {
 }
 
 const styles = {
+  authContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '100vh',
+    backgroundColor: '#F8F9FA',
+    padding: '20px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  },
+  authCard: {
+    backgroundColor: '#FFFFFF',
+    padding: '40px',
+    borderRadius: '16px',
+    border: '1px solid #E2E8F0',
+    width: '100%',
+    maxWidth: '420px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+    textAlign: 'center'
+  },
+  authTitle: {
+    fontSize: '28px',
+    fontWeight: '800',
+    margin: '0 0 6px 0',
+    color: '#1A202C'
+  },
+  authSubtitle: {
+    color: '#718096',
+    fontSize: '14px',
+    margin: '0 0 24px 0'
+  },
+  authTabs: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '20px',
+    marginBottom: '20px',
+    borderBottom: '1px solid #E2E8F0',
+    paddingBottom: '10px'
+  },
+  authTabBtn: {
+    background: 'none',
+    border: 'none',
+    fontSize: '15px',
+    cursor: 'pointer',
+    paddingBottom: '4px',
+    color: '#2D3748'
+  },
+  authForm: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '14px'
+  },
+  errorMsg: {
+    backgroundColor: '#FFF5F5',
+    color: '#E53E3E',
+    padding: '10px',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontWeight: '600'
+  },
+  authSubmitBtn: {
+    padding: '12px',
+    borderRadius: '8px',
+    border: 'none',
+    backgroundColor: '#1A202C',
+    color: '#FFFFFF',
+    fontSize: '15px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    marginTop: '6px'
+  },
   container: {
     maxWidth: '1000px',
     margin: '0 auto',
@@ -533,6 +765,32 @@ const styles = {
     flexWrap: 'wrap',
     gap: '14px'
   },
+  topRightControls: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    flexWrap: 'wrap'
+  },
+  userBadgeInfo: {
+    backgroundColor: '#FFFFFF',
+    padding: '6px 12px',
+    borderRadius: '20px',
+    border: '1px solid #E2E8F0',
+    fontSize: '13px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+  },
+  logoutBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#E53E3E',
+    fontSize: '12px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    padding: '0'
+  },
   tabSwitchers: {
     display: 'flex',
     gap: '10px'
@@ -550,7 +808,7 @@ const styles = {
   themePicker: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '6px',
     backgroundColor: '#FFFFFF',
     padding: '6px 12px',
     borderRadius: '20px',
@@ -567,8 +825,8 @@ const styles = {
     gap: '6px'
   },
   colorDot: {
-    width: '18px',
-    height: '18px',
+    width: '16px',
+    height: '16px',
     borderRadius: '50%',
     cursor: 'pointer',
     outline: 'none'
@@ -595,7 +853,6 @@ const styles = {
     fontSize: '15px',
     margin: '0 0 20px 0'
   },
-  // CĂN CHỈNH ĐỘ RỘNG THẲNG HÀNG TUYỆT ĐỐI CHO CẢ 2 Ô
   headerActions: {
     display: 'flex',
     flexDirection: 'column',
