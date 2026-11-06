@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const initialSubjects = [
   {
@@ -14,17 +14,15 @@ Tính đóng gói là một trong bốn trụ cột cơ bản của Lập trình
 
 ✦ 2. Bản chất chi tiết & Cách hoạt động:
 - Trong thực tế, giống như một viên thuốc con nhộng che giấu các thành phần dược liệu bên trong, trong lập trình, các thuộc tính (dữ liệu) của class sẽ được khai báo ở chế độ riêng tư (private).
-- Để bên ngoài có thể tương tác hoặc thay đổi dữ liệu đó một cách có kiểm soát, lập trình viên phải thông qua các phương thức công khai (public methods) được gọi là Getter (để lấy giá trị) và Setter (để gán/kiểm tra giá trị hợp lệ trước khi lưu).
-
-✦ 3. Ví dụ minh họa thực tế:
-Hãy tưởng tượng tài khoản ngân hàng của cậu. Số dư tài khoản là dữ liệu cực kỳ nhạy cảm, không ai được phép tự ý gán số dư thành 10 tỷ đồng từ bên ngoài. Thay vào đó, hệ thống bắt buộc phải thông qua hàm nạp/rút tiền (Setter) để kiểm tra xem tài khoản có đủ số dư hay không rồi mới cho phép thay đổi.
-
-✦ 4. Lưu ý quan trọng khi ôn thi:
-- Luôn nhớ từ khóa truy cập: private (cho dữ liệu) và public (cho getter/setter).
-- Giúp mã nguồn có tính bảo mật cao, dễ dàng thay đổi cấu trúc bên trong mà không làm ảnh hưởng đến các đoạn code ở bên ngoài.`
+- Để bên ngoài có thể tương tác hoặc thay đổi dữ liệu đó một cách có kiểm soát, lập trình viên phải thông qua các phương thức công khai (public methods) được gọi là Getter (để lấy giá trị) và Setter (để gán/kiểm tra giá trị hợp lệ trước khi lưu).`
       }
     ]
   }
+];
+
+const initialTimetable = [
+  { id: 1, day: "Thứ Hai", time: "07:00 - 11:15", subject: "Lập trình Hướng đối tượng (OOP)", room: "Phòng thực hành A2.1" },
+  { id: 2, day: "Thứ Tư", time: "13:30 - 17:00", subject: "Cấu trúc dữ liệu và Giải thuật", room: "Phòng lý thuyết B3.4" },
 ];
 
 const generateAITeachingContent = (title) => {
@@ -36,51 +34,70 @@ const generateAITeachingContent = (title) => {
 
 ✦ 2. Bản chất chi tiết & Cơ chế hoạt động:
 - Định nghĩa rõ ràng: ${t} bản chất là sự kết hợp giữa các thành phần lý thuyết cơ bản và các quy tắc vận hành logic.
-- Cách tiếp cận: Để hiểu sâu, chúng ta cần phân tích cấu trúc thành phần bên trong, cách dữ liệu hoặc thông tin được truyền nhận và xử lý qua lại giữa các đối tượng hoặc module.
 - Các bước triển khai chuẩn: Xác định bài toán cần giải quyết ➔ Thiết kế mô hình/thuật toán ➔ Viết mã nguồn kiểm chứng ➔ Tối ưu hóa hiệu suất.
 
 ✦ 3. Ví dụ minh họa thực tế dễ hiểu:
-Hãy hình dung ${t} giống như cách chúng ta giải quyết một tình huống quen thuộc hằng ngày: chia nhỏ vấn đề lớn thành các bước xử lý đơn giản, tuần tự và có kiểm soát. Sự rõ ràng trong tư duy giúp hệ thống vận hành trơn tru và không xảy ra lỗi logic.
+Hãy hình dung ${t} giống như cách chúng ta giải quyết một tình huống quen thuộc hằng ngày: chia nhỏ vấn đề lớn thành các bước xử lý đơn giản, tuần tự và có kiểm soát.
 
-✦ 4. Lời khuyên ôn tập và học tập:
-- Đừng chỉ học vẹt lý thuyết, hãy tự viết lại định nghĩa bằng ngôn ngữ của chính mình.
-- Kết hợp tra cứu tài liệu Google và xem các video trực quan trên YouTube ở phần liên kết bên dưới để củng cố kiến thức một cách trực quan nhất nhé!`;
+✦ 4. Lời khuyên ôn tập:
+- Đừng chỉ học vẹt lý thuyết, hãy tự viết lại định nghĩa bằng ngôn ngữ của chính mình và kết hợp xem video hướng dẫn bên dưới nhé!`;
 };
 
+// Danh sách các bảng màu cá nhân hóa để cậu lựa chọn
+const themes = [
+  { name: "Cổ điển (Dark)", primary: "#1A202C", indicator: "#3182CE", bg: "#F8F9FA" },
+  { name: "Xanh dương (Blue)", primary: "#0066CC", indicator: "#0052A3", bg: "#F0F5FF" },
+  { name: "Tím nghiên cứu (Purple)", primary: "#6B46C1", indicator: "#805AD5", bg: "#FAF5FF" },
+  { name: "Xanh lá mạ (Green)", primary: "#2F855A", indicator: "#38A169", bg: "#F0FFF4" },
+  { name: "Cam năng động (Orange)", primary: "#C05621", indicator: "#DD6B20", bg: "#FFFAF0" },
+];
+
 export default function StudyDiary() {
+  const [activeTab, setActiveTab] = useState("diary"); // "diary" hoặc "timetable"
+  
+  // Lưu màu chủ đề vào localStorage để giữ nguyên khi F5
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    const saved = localStorage.getItem("study_diary_theme");
+    return saved ? JSON.parse(saved) : themes[0];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("study_diary_theme", JSON.stringify(currentTheme));
+  }, [currentTheme]);
+
   const [subjects, setSubjects] = useState(initialSubjects);
+  const [timetable, setTimetable] = useState(initialTimetable);
   const [newSubjectName, setNewSubjectName] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [activeSubjectId, setActiveSubjectId] = useState(null);
 
-  // Form state cho bài học
+  // Form bài học
   const [newDate, setNewDate] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [editingEntryId, setEditingEntryId] = useState(null);
-
-  // Mở rộng/thu gọn bài học
   const [expandedEntries, setExpandedEntries] = useState({ 101: true });
 
-  // Thêm môn học mới
+  // Form Thời khóa biểu
+  const [ttDay, setTtDay] = useState("Thứ Hai");
+  const [ttTime, setTtTime] = useState("");
+  const [ttSubject, setTtSubject] = useState("");
+  const [ttRoom, setTtRoom] = useState("");
+
+  // Thêm môn học
   const handleAddSubject = (e) => {
     e.preventDefault();
     if (!newSubjectName.trim()) return;
-    const newSub = {
-      id: Date.now(),
-      name: newSubjectName.trim(),
-      entries: []
-    };
+    const newSub = { id: Date.now(), name: newSubjectName.trim(), entries: [] };
     setSubjects([...subjects, newSub]);
     setNewSubjectName("");
   };
 
-  // Xóa môn học
   const handleDeleteSubject = (subjectId) => {
-    if (!window.confirm("Cậu có chắc chắn muốn xóa môn học này cùng toàn bộ bài học bên trong không?")) return;
+    if (!window.confirm("Cậu có chắc chắn muốn xóa môn học này không?")) return;
     setSubjects(subjects.filter(sub => sub.id !== subjectId));
   };
 
-  // Tự động sinh nội dung khi gõ tiêu đề
   const handleTitleChange = (e) => {
     const val = e.target.value;
     setNewTitle(val);
@@ -91,7 +108,6 @@ export default function StudyDiary() {
     }
   };
 
-  // Mở form thêm bài học
   const openAddForm = (subjectId) => {
     setActiveSubjectId(activeSubjectId === subjectId ? null : subjectId);
     setEditingEntryId(null);
@@ -100,7 +116,6 @@ export default function StudyDiary() {
     setNewContent("");
   };
 
-  // Mở form sửa bài học
   const handleStartEdit = (entry, subjectId) => {
     setActiveSubjectId(subjectId);
     setEditingEntryId(entry.id);
@@ -109,7 +124,6 @@ export default function StudyDiary() {
     setNewContent(entry.content);
   };
 
-  // Lưu bài học (Thêm mới hoặc Cập nhật)
   const handleSaveEntry = (e, subjectId) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
@@ -145,428 +159,742 @@ export default function StudyDiary() {
     setActiveSubjectId(null);
   };
 
-  // Xóa bài học
   const handleDeleteEntry = (entryKey, subjectId) => {
-    if (!window.confirm("Cậu có chắc chắn muốn xóa bài học này không?")) return;
-
+    if (!window.confirm("Cậu có chắc muốn xóa bài học này?")) return;
     setSubjects(subjects.map(sub => {
       if (sub.id === subjectId) {
-        return {
-          ...sub,
-          entries: sub.entries.filter(ent => ent.id !== entryKey)
-        };
+        return { ...sub, entries: sub.entries.filter(ent => ent.id !== entryKey) };
       }
       return sub;
     }));
   };
 
   const toggleExpand = (entryId) => {
-    setExpandedEntries(prev => ({
-      ...prev,
-      [entryId]: !prev[entryId]
-    }));
+    setExpandedEntries(prev => ({ ...prev, [entryId]: !prev[entryId] }));
   };
 
-  return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <h1 style={styles.headerTitle}>Nhật ký Học tập</h1>
-        <p style={styles.headerSubtitle}>Trợ lý ghi chép kiến thức chi tiết và trực quan</p>
+  // Thêm lịch học vào thời khóa biểu
+  const handleAddTimetable = (e) => {
+    e.preventDefault();
+    if (!ttSubject.trim()) return;
+    const newItem = {
+      id: Date.now(),
+      day: ttDay,
+      time: ttTime.trim() || "07:00 - 09:15",
+      subject: ttSubject.trim(),
+      room: ttRoom.trim() || "Chưa cập nhật phòng"
+    };
+    setTimetable([...timetable, newItem]);
+    setTtSubject("");
+    setTtRoom("");
+    setTtTime("");
+  };
 
-        <form onSubmit={handleAddSubject} style={styles.inlineForm}>
-          <input 
-            type="text"
-            placeholder="Thêm môn học mới (ví dụ: Cơ sở dữ liệu)..."
-            value={newSubjectName}
-            onChange={(e) => setNewSubjectName(e.target.value)}
-            style={styles.input}
-          />
-          <button type="submit" style={styles.buttonPrimary}>Thêm môn học</button>
-        </form>
+  const handleDeleteTimetable = (id) => {
+    if (!window.confirm("Xóa lịch học này?")) return;
+    setTimetable(timetable.filter(item => item.id !== id));
+  };
+
+  const filteredSubjects = subjects.map(sub => {
+    if (!searchTerm.trim()) return sub;
+    const filteredEntries = sub.entries.filter(ent => 
+      ent.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      ent.content.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    return { ...sub, entries: filteredEntries };
+  }).filter(sub => sub.name.toLowerCase().includes(searchTerm.toLowerCase()) || sub.entries.length > 0);
+
+  return (
+    <div style={{ ...styles.container, backgroundColor: currentTheme.bg }}>
+      <header style={styles.header}>
+        {/* THANH CÁ NHÂN HÓA MÀU SẮC & CHUYỂN TAB */}
+        <div style={styles.topBar}>
+          <div style={styles.tabSwitchers}>
+            <button 
+              onClick={() => setActiveTab("diary")} 
+              style={{ 
+                ...styles.tabBtn, 
+                backgroundColor: activeTab === "diary" ? currentTheme.primary : "#FFFFFF",
+                color: activeTab === "diary" ? "#FFFFFF" : "#2D3748",
+                borderColor: currentTheme.primary
+              }}
+            >
+              📖 Nhật ký học tập
+            </button>
+            <button 
+              onClick={() => setActiveTab("timetable")} 
+              style={{ 
+                ...styles.tabBtn, 
+                backgroundColor: activeTab === "timetable" ? currentTheme.primary : "#FFFFFF",
+                color: activeTab === "timetable" ? "#FFFFFF" : "#2D3748",
+                borderColor: currentTheme.primary
+              }}
+            >
+              📅 Thời khóa biểu
+            </button>
+          </div>
+
+          {/* Chọn màu chủ đề */}
+          <div style={styles.themePicker}>
+            <span style={styles.themeLabel}>Màu chủ đề:</span>
+            <div style={styles.themeColorsRow}>
+              {themes.map((th, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentTheme(th)}
+                  style={{
+                    ...styles.colorDot,
+                    backgroundColor: th.primary,
+                    border: currentTheme.primary === th.primary ? '2px solid #000' : '2px solid transparent'
+                  }}
+                  title={th.name}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div style={styles.headerBadge}>Workspace cá nhân</div>
+        <h1 style={styles.headerTitle}>Nhật ký Học tập & Lịch trình</h1>
+        <p style={styles.headerSubtitle}>Học đi nếu kh muốn rớt môn</p>
+
+        {activeTab === "diary" && (
+          <div style={styles.headerActions}>
+            <form onSubmit={handleAddSubject} style={styles.inlineForm}>
+              <input 
+                type="text"
+                placeholder="Thêm môn học mới (ví dụ: Cơ sở dữ liệu)..."
+                value={newSubjectName}
+                onChange={(e) => setNewSubjectName(e.target.value)}
+                style={styles.input}
+              />
+              <button type="submit" style={{ ...styles.buttonPrimary, backgroundColor: currentTheme.primary }}>
+                Thêm môn học
+              </button>
+            </form>
+
+            <input 
+              type="text"
+              placeholder="Tìm kiếm môn học hoặc nội dung bài học..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={styles.searchInput}
+            />
+          </div>
+        )}
       </header>
 
-      <div style={styles.subjectsGrid}>
-        {subjects.map((sub) => {
-          const isAddingOrEditing = activeSubjectId === sub.id;
+      {/* NỘI DUNG TAB 1: NHẬT KÝ HỌC TẬP */}
+      {activeTab === "diary" && (
+        <div style={styles.subjectsGrid}>
+          {filteredSubjects.length === 0 ? (
+            <div style={styles.emptySearchCard}>
+              <p style={styles.emptyText}>Không tìm thấy môn học hoặc bài viết phù hợp.</p>
+            </div>
+          ) : (
+            filteredSubjects.map((sub) => {
+              const isAddingOrEditing = activeSubjectId === sub.id;
 
-          return (
-            <div key={sub.id} style={styles.subjectCard}>
-              <div style={styles.subjectHeader}>
-                <h2 style={styles.subjectTitle}>{sub.name}</h2>
-                <div style={styles.subjectHeaderActions}>
-                  <button 
-                    onClick={() => openAddForm(sub.id)}
-                    style={styles.buttonSecondary}
-                  >
-                    {isAddingOrEditing ? "Đóng" : "+ Thêm bài học"}
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteSubject(sub.id)}
-                    style={styles.deleteSubjectBtn}
-                    title="Xóa môn học này"
-                  >
-                    Xóa môn
-                  </button>
-                </div>
-              </div>
-
-              {/* Form Thêm hoặc Sửa bài học */}
-              {isAddingOrEditing && (
-                <form onSubmit={(e) => handleSaveEntry(e, sub.id)} style={styles.entryForm}>
-                  <h3 style={styles.formTitle}>
-                    {editingEntryId ? "Chỉnh sửa bài học" : "Thêm bài học mới"}
-                  </h3>
-                  <input 
-                    type="text"
-                    placeholder="Ngày (ví dụ: 07/11/2026)"
-                    value={newDate}
-                    onChange={(e) => setNewDate(e.target.value)}
-                    style={styles.input}
-                  />
-                  <input 
-                    type="text"
-                    placeholder="Nhập tiêu đề bài học..."
-                    value={newTitle}
-                    onChange={handleTitleChange}
-                    style={styles.input}
-                  />
-                  <textarea 
-                    placeholder="Nội dung bài giảng..."
-                    value={newContent}
-                    onChange={(e) => setNewContent(e.target.value)}
-                    style={styles.textarea}
-                  />
-                  <div style={styles.formActions}>
-                    <button 
-                      type="button" 
-                      onClick={() => { setActiveSubjectId(null); setEditingEntryId(null); }}
-                      style={styles.buttonCancel}
-                    >
-                      Hủy
-                    </button>
-                    <button type="submit" style={styles.buttonPrimary}>
-                      {editingEntryId ? "Cập nhật" : "Lưu bài học"}
-                    </button>
+              return (
+                <div key={sub.id} style={styles.subjectCard}>
+                  <div style={styles.subjectHeader}>
+                    <div style={styles.subjectTitleWrapper}>
+                      <span style={{ ...styles.subjectIndicator, backgroundColor: currentTheme.indicator }}></span>
+                      <h2 style={styles.subjectTitle}>{sub.name}</h2>
+                    </div>
+                    <div style={styles.subjectHeaderActions}>
+                      <button 
+                        onClick={() => openAddForm(sub.id)}
+                        style={styles.buttonSecondary}
+                      >
+                        {isAddingOrEditing ? "Đóng form" : "+ Thêm bài học"}
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteSubject(sub.id)}
+                        style={styles.deleteSubjectBtn}
+                      >
+                        Xóa môn
+                      </button>
+                    </div>
                   </div>
-                </form>
-              )}
 
-              <div style={styles.entriesList}>
-                {sub.entries.length === 0 ? (
-                  <p style={styles.emptyText}>Chưa có bài học nào trong môn này.</p>
-                ) : (
-                  sub.entries.map((entry) => {
-                    const isExpanded = !!expandedEntries[entry.id];
-                    const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(entry.title)}`;
-                    const youtubeSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(entry.title)}`;
+                  {isAddingOrEditing && (
+                    <form onSubmit={(e) => handleSaveEntry(e, sub.id)} style={styles.entryForm}>
+                      <h3 style={styles.formTitle}>
+                        {editingEntryId ? "Chỉnh sửa bài học" : "Thêm bài học mới"}
+                      </h3>
+                      <div style={styles.formRow}>
+                        <input 
+                          type="text"
+                          placeholder="Ngày (ví dụ: 07/11/2026)"
+                          value={newDate}
+                          onChange={(e) => setNewDate(e.target.value)}
+                          style={{ ...styles.input, flex: '0 0 180px' }}
+                        />
+                        <input 
+                          type="text"
+                          placeholder="Nhập tiêu đề bài học (AI tự động viết nội dung)..."
+                          value={newTitle}
+                          onChange={handleTitleChange}
+                          style={{ ...styles.input, flex: 1 }}
+                        />
+                      </div>
+                      <textarea 
+                        placeholder="Nội dung bài giảng chi tiết..."
+                        value={newContent}
+                        onChange={(e) => setNewContent(e.target.value)}
+                        style={styles.textarea}
+                      />
+                      <div style={styles.formActions}>
+                        <button 
+                          type="button" 
+                          onClick={() => { setActiveSubjectId(null); setEditingEntryId(null); }}
+                          style={styles.buttonCancel}
+                        >
+                          Hủy
+                        </button>
+                        <button type="submit" style={{ ...styles.buttonPrimary, backgroundColor: currentTheme.primary }}>
+                          {editingEntryId ? "Cập nhật" : "Lưu vào nhật ký"}
+                        </button>
+                      </div>
+                    </form>
+                  )}
 
-                    return (
-                      <div key={entry.id} style={styles.entryItem}>
-                        <div style={styles.entryTopRow}>
-                          <span style={styles.dateText}>{entry.date}</span>
-                          <div style={styles.entryActions}>
-                            <button onClick={() => toggleExpand(entry.id)} style={styles.textBtn}>
-                              {isExpanded ? "Thu gọn" : "Xem chi tiết"}
-                            </button>
-                            <span style={styles.dotSeparator}>·</span>
-                            <button onClick={() => handleStartEdit(entry, sub.id)} style={styles.textBtn}>
-                              Sửa
-                            </button>
-                            <span style={styles.dotSeparator}>·</span>
-                            <button onClick={() => handleDeleteEntry(entry.id, sub.id)} style={styles.deleteBtn}>
-                              Xóa
-                            </button>
-                          </div>
-                        </div>
+                  <div style={styles.entriesList}>
+                    {sub.entries.length === 0 ? (
+                      <div style={styles.emptyBox}>
+                        <p style={styles.emptyText}>Chưa có bài học nào trong môn này.</p>
+                      </div>
+                    ) : (
+                      sub.entries.map((entry) => {
+                        const isExpanded = !!expandedEntries[entry.id];
+                        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(entry.title)}`;
+                        const youtubeSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(entry.title)}`;
 
-                        <h3 style={styles.entryTitle}>{entry.title}</h3>
-
-                        {isExpanded && (
-                          <div style={styles.expandedContentContainer}>
-                            <p style={styles.entryContent}>{entry.content}</p>
-
-                            <div style={styles.linksSection}>
-                              <span style={styles.linksLabel}>Tài liệu & Video học tập:</span>
-                              <div style={styles.linksRow}>
-                                <a 
-                                  href={googleSearchUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  style={styles.linkAnchor}
-                                >
-                                  Tìm tài liệu Google
-                                </a>
-                                <span style={styles.dot}>·</span>
-                                <a 
-                                  href={youtubeSearchUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  style={styles.linkAnchor}
-                                >
-                                  Xem video YouTube
-                                </a>
+                        return (
+                          <div key={entry.id} style={styles.entryItem}>
+                            <div style={styles.entryTopRow}>
+                              <span style={styles.dateText}>{entry.date}</span>
+                              <div style={styles.entryActions}>
+                                <button onClick={() => toggleExpand(entry.id)} style={{ ...styles.textBtn, color: currentTheme.primary }}>
+                                  {isExpanded ? "Thu gọn" : "Xem chi tiết"}
+                                </button>
+                                <span style={styles.dotSeparator}>·</span>
+                                <button onClick={() => handleStartEdit(entry, sub.id)} style={styles.textBtn}>
+                                  Sửa
+                                </button>
+                                <span style={styles.dotSeparator}>·</span>
+                                <button onClick={() => handleDeleteEntry(entry.id, sub.id)} style={styles.deleteBtn}>
+                                  Xóa
+                                </button>
                               </div>
                             </div>
+
+                            <h3 style={styles.entryTitle}>{entry.title}</h3>
+
+                            {isExpanded && (
+                              <div style={styles.expandedContentContainer}>
+                                <div style={styles.contentBox}>
+                                  <p style={styles.entryContent}>{entry.content}</p>
+                                </div>
+
+                                <div style={styles.linksSection}>
+                                  <span style={styles.linksLabel}>Tài liệu tra cứu & Video học tập:</span>
+                                  <div style={styles.linksRow}>
+                                    <a href={googleSearchUrl} target="_blank" rel="noopener noreferrer" style={{ ...styles.linkAnchor, color: currentTheme.primary }}>
+                                      Tìm tài liệu Google ↗
+                                    </a>
+                                    <span style={styles.dot}>·</span>
+                                    <a href={youtubeSearchUrl} target="_blank" rel="noopener noreferrer" style={{ ...styles.linkAnchor, color: currentTheme.primary }}>
+                                      Xem video YouTube ↗
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* NỘI DUNG TAB 2: THỜI KHÓA BIỂU */}
+      {activeTab === "timetable" && (
+        <div style={styles.timetableContainer}>
+          <div style={styles.subjectCard}>
+            <h2 style={styles.subjectTitle}>Thêm lịch học mới</h2>
+            <form onSubmit={handleAddTimetable} style={styles.ttForm}>
+              <select 
+                value={ttDay} 
+                onChange={(e) => setTtDay(e.target.value)}
+                style={styles.input}
+              >
+                {["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"].map((d, i) => (
+                  <option key={i} value={d}>{d}</option>
+                ))}
+              </select>
+              <input 
+                type="text"
+                placeholder="Giờ học (vd: 07:00 - 11:15)"
+                value={ttTime}
+                onChange={(e) => setTtTime(e.target.value)}
+                style={styles.input}
+              />
+              <input 
+                type="text"
+                placeholder="Tên môn học..."
+                value={ttSubject}
+                onChange={(e) => setTtSubject(e.target.value)}
+                style={styles.input}
+              />
+              <input 
+                type="text"
+                placeholder="Phòng học (vd: Phòng A2.1)"
+                value={ttRoom}
+                onChange={(e) => setTtRoom(e.target.value)}
+                style={styles.input}
+              />
+              <button type="submit" style={{ ...styles.buttonPrimary, backgroundColor: currentTheme.primary }}>
+                Thêm lịch học
+              </button>
+            </form>
+          </div>
+
+          <div style={styles.subjectCard}>
+            <h2 style={styles.subjectTitle}>Lịch học trong tuần của cậu</h2>
+            {timetable.length === 0 ? (
+              <p style={styles.emptyText}>Chưa có lịch học nào được thêm.</p>
+            ) : (
+              <div style={styles.ttTableWrapper}>
+                <table style={styles.ttTable}>
+                  <thead>
+                    <tr style={styles.ttTrHead}>
+                      <th style={styles.ttTh}>Thứ</th>
+                      <th style={styles.ttTh}>Thời gian</th>
+                      <th style={styles.ttTh}>Môn học</th>
+                      <th style={styles.ttTh}>Phòng học</th>
+                      <th style={styles.ttTh}>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {timetable.map((item) => (
+                      <tr key={item.id} style={styles.ttTr}>
+                        <td style={styles.ttTd}><span style={styles.dateText}>{item.day}</span></td>
+                        <td style={styles.ttTd}>{item.time}</td>
+                        <td style={{ ...styles.ttTd, fontWeight: '600' }}>{item.subject}</td>
+                        <td style={styles.ttTd}>{item.room}</td>
+                        <td style={styles.ttTd}>
+                          <button onClick={() => handleDeleteTimetable(item.id)} style={styles.deleteBtn}>
+                            Xóa
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 const styles = {
   container: {
-    maxWidth: '900px',
+    maxWidth: '920px',
     margin: '0 auto',
-    padding: '40px 20px',
-    backgroundColor: '#F7F7F5',
+    padding: '40px 24px',
     minHeight: '100vh',
-    color: '#37352F',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    color: '#2D3748',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    transition: 'background-color 0.3s ease'
   },
   header: {
-    marginBottom: '32px',
+    marginBottom: '36px',
     textAlign: 'center'
+  },
+  topBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '24px',
+    flexWrap: 'wrap',
+    gap: '14px'
+  },
+  tabSwitchers: {
+    display: 'flex',
+    gap: '10px'
+  },
+  tabBtn: {
+    padding: '8px 16px',
+    borderRadius: '8px',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  },
+  themePicker: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    backgroundColor: '#FFFFFF',
+    padding: '6px 12px',
+    borderRadius: '20px',
+    border: '1px solid #E2E8F0',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+  },
+  themeLabel: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#4A5568'
+  },
+  themeColorsRow: {
+    display: 'flex',
+    gap: '6px'
+  },
+  colorDot: {
+    width: '18px',
+    height: '18px',
+    borderRadius: '50%',
+    cursor: 'pointer',
+    outline: 'none'
+  },
+  headerBadge: {
+    display: 'inline-block',
+    padding: '4px 12px',
+    backgroundColor: '#EDF2F7',
+    color: '#4A5568',
+    fontSize: '12px',
+    fontWeight: '600',
+    borderRadius: '20px',
+    marginBottom: '10px',
+    textTransform: 'uppercase'
   },
   headerTitle: {
     fontSize: '32px',
-    fontWeight: '700',
-    margin: 0
+    fontWeight: '800',
+    margin: '0 0 6px 0',
+    color: '#1A202C'
   },
   headerSubtitle: {
-    color: '#787774',
+    color: '#718096',
     fontSize: '15px',
-    margin: '8px 0 20px 0'
+    margin: '0 0 20px 0'
+  },
+  headerActions: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    maxWidth: '600px',
+    margin: '0 auto'
   },
   inlineForm: {
     display: 'flex',
-    justifyContent: 'center',
-    gap: '10px',
-    maxWidth: '550px',
-    margin: '0 auto'
+    gap: '10px'
   },
   input: {
-    flex: 1,
-    padding: '10px 14px',
-    borderRadius: '6px',
-    border: '1px solid #E1E1DF',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    border: '1px solid #E2E8F0',
+    backgroundColor: '#FFFFFF',
+    fontSize: '14px',
+    outline: 'none',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+  },
+  searchInput: {
+    width: '100%',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    border: '1px solid #E2E8F0',
     backgroundColor: '#FFFFFF',
     fontSize: '14px',
     outline: 'none'
   },
   textarea: {
     width: '100%',
-    padding: '10px 14px',
-    borderRadius: '6px',
-    border: '1px solid #E1E1DF',
+    padding: '14px 16px',
+    borderRadius: '8px',
+    border: '1px solid #E2E8F0',
     backgroundColor: '#FFFFFF',
     fontSize: '14px',
-    minHeight: '150px',
+    minHeight: '160px',
     outline: 'none',
     resize: 'vertical',
     lineHeight: '1.6'
   },
   buttonPrimary: {
-    padding: '10px 16px',
-    borderRadius: '6px',
+    padding: '12px 20px',
+    borderRadius: '8px',
     border: 'none',
-    backgroundColor: '#222222',
     color: '#FFFFFF',
     fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  buttonSecondary: {
+    padding: '8px 14px',
+    borderRadius: '6px',
+    border: '1px solid #E2E8F0',
+    backgroundColor: '#FFFFFF',
+    color: '#2D3748',
+    fontSize: '13px',
     fontWeight: '500',
     cursor: 'pointer'
   },
-  buttonSecondary: {
-    padding: '6px 12px',
-    borderRadius: '6px',
-    border: '1px solid #E1E1DF',
-    backgroundColor: '#FFFFFF',
-    color: '#37352F',
-    fontSize: '13px',
-    cursor: 'pointer'
-  },
   deleteSubjectBtn: {
-    padding: '6px 12px',
+    padding: '8px 14px',
     borderRadius: '6px',
-    border: '1px solid #F8D7DA',
+    border: '1px solid #FED7D7',
     backgroundColor: '#FFF5F5',
-    color: '#D93025',
+    color: '#E53E3E',
     fontSize: '13px',
     cursor: 'pointer',
-    fontWeight: '500'
+    fontWeight: '600'
   },
   buttonCancel: {
-    padding: '10px 14px',
-    borderRadius: '6px',
-    border: '1px solid #E1E1DF',
+    padding: '10px 16px',
+    borderRadius: '8px',
+    border: '1px solid #E2E8F0',
     backgroundColor: '#FFFFFF',
-    color: '#555555',
+    color: '#718096',
     fontSize: '14px',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    fontWeight: '500'
   },
   subjectsGrid: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px'
+    gap: '28px'
   },
   subjectCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: '12px',
-    border: '1px solid #E1E1DF',
-    padding: '24px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+    borderRadius: '16px',
+    border: '1px solid #E2E8F0',
+    padding: '28px',
+    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)'
   },
   subjectHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottom: '1px solid #EFEFEE',
+    borderBottom: '2px solid #F7FAFC',
     paddingBottom: '16px',
-    marginBottom: '16px',
+    marginBottom: '20px',
     flexWrap: 'wrap',
+    gap: '12px'
+  },
+  subjectTitleWrapper: {
+    display: 'flex',
+    alignItems: 'center',
     gap: '10px'
+  },
+  subjectIndicator: {
+    width: '8px',
+    height: '24px',
+    borderRadius: '4px'
   },
   subjectHeaderActions: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px'
+    gap: '10px'
   },
   subjectTitle: {
     fontSize: '20px',
-    fontWeight: '600',
+    fontWeight: '700',
     margin: 0,
-    color: '#111111'
+    color: '#1A202C'
   },
   entryForm: {
-    backgroundColor: '#FAFAFA',
-    padding: '16px',
-    borderRadius: '8px',
-    border: '1px solid #EFEFEE',
+    backgroundColor: '#F8F9FA',
+    padding: '20px',
+    borderRadius: '12px',
+    border: '1px solid #E2E8F0',
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
-    marginBottom: '20px'
+    gap: '14px',
+    marginBottom: '24px'
   },
   formTitle: {
     fontSize: '15px',
-    fontWeight: '600',
+    fontWeight: '700',
     margin: '0 0 4px 0',
-    color: '#333333'
+    color: '#2D3748'
+  },
+  formRow: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap'
   },
   formActions: {
     display: 'flex',
     justifyContent: 'flex-end',
-    gap: '8px'
+    gap: '10px',
+    marginTop: '4px'
   },
   entriesList: {
     display: 'flex',
     flexDirection: 'column',
     gap: '16px'
   },
+  emptyBox: {
+    padding: '24px',
+    textAlign: 'center',
+    backgroundColor: '#FAFAFA',
+    borderRadius: '10px',
+    border: '1px dashed #CBD5E0'
+  },
+  emptySearchCard: {
+    padding: '40px',
+    textAlign: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: '16px',
+    border: '1px solid #E2E8F0'
+  },
   emptyText: {
-    color: '#888888',
+    color: '#718096',
     fontSize: '14px',
-    fontStyle: 'italic',
     margin: 0
   },
   entryItem: {
     backgroundColor: '#FAFAFA',
-    borderRadius: '8px',
-    padding: '18px',
-    border: '1px solid #EFEFEE'
+    borderRadius: '12px',
+    padding: '20px',
+    border: '1px solid #E2E8F0'
   },
   entryTopRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '8px'
+    marginBottom: '10px'
   },
   dateText: {
     fontSize: '12px',
-    backgroundColor: '#F1F1EF',
-    padding: '2px 6px',
-    borderRadius: '4px',
-    color: '#555555'
+    backgroundColor: '#EDF2F7',
+    padding: '3px 8px',
+    borderRadius: '6px',
+    color: '#4A5568',
+    fontWeight: '600'
   },
   entryActions: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px'
+    gap: '8px'
   },
   textBtn: {
     background: 'none',
     border: 'none',
-    color: '#0066CC',
     fontSize: '13px',
-    fontWeight: '500',
+    fontWeight: '600',
     cursor: 'pointer',
     padding: 0
   },
   deleteBtn: {
     background: 'none',
     border: 'none',
-    color: '#D93025',
+    color: '#E53E3E',
     fontSize: '13px',
-    fontWeight: '500',
+    fontWeight: '600',
     cursor: 'pointer',
     padding: 0
   },
   dotSeparator: {
-    color: '#CCCCCC',
+    color: '#CBD5E0',
     fontSize: '12px'
   },
   entryTitle: {
-    fontSize: '16px',
-    fontWeight: '600',
-    margin: '0 0 10px 0',
-    color: '#222222'
+    fontSize: '17px',
+    fontWeight: '700',
+    margin: '0 0 12px 0',
+    color: '#1A202C'
   },
   expandedContentContainer: {
-    borderTop: '1px solid #EFEFEE',
-    paddingTop: '12px',
-    marginTop: '4px'
+    borderTop: '1px solid #E2E8F0',
+    paddingTop: '16px',
+    marginTop: '8px'
+  },
+  contentBox: {
+    backgroundColor: '#FFFFFF',
+    padding: '16px',
+    borderRadius: '8px',
+    border: '1px solid #E2E8F0',
+    marginBottom: '14px'
   },
   entryContent: {
     fontSize: '14px',
-    lineHeight: '1.7',
-    color: '#37352F',
-    margin: '0 0 14px 0',
+    lineHeight: '1.8',
+    color: '#2D3748',
+    margin: 0,
     whiteSpace: 'pre-line'
   },
   linksSection: {
-    borderTop: '1px solid #EFEFEE',
-    paddingTop: '10px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px'
+    gap: '6px'
   },
   linksLabel: {
-    fontSize: '12px',
-    fontWeight: '600',
-    color: '#787774',
+    fontSize: '11px',
+    fontWeight: '700',
+    color: '#718096',
     textTransform: 'uppercase',
-    letterSpacing: '0.5px'
+    letterSpacing: '0.8px'
   },
   linksRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '10px',
     fontSize: '13px'
   },
   linkAnchor: {
-    color: '#0066CC',
     textDecoration: 'none',
-    fontWeight: '500'
+    fontWeight: '650'
   },
   dot: {
-    color: '#999999'
+    color: '#CBD5E0'
+  },
+  timetableContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px'
+  },
+  ttForm: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: '12px',
+    marginTop: '12px'
+  },
+  ttTableWrapper: {
+    overflowX: 'auto',
+    marginTop: '12px'
+  },
+  ttTable: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    textAlign: 'left',
+    fontSize: '14px'
+  },
+  ttTrHead: {
+    borderBottom: '2px solid #E2E8F0',
+    color: '#4A5568'
+  },
+  ttTh: {
+    padding: '10px 12px',
+    fontWeight: '700'
+  },
+  ttTr: {
+    borderBottom: '1px solid #EDF2F7'
+  },
+  ttTd: {
+    padding: '12px'
   }
 };
