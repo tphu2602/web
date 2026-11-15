@@ -1,4 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// 1. CẤU HÌNH API KEYS TỪ BIẾN MÔI TRƯỜNG (.env)
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
+const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || "";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+
+// Khởi tạo Supabase (Chỉ kích hoạt khi đã điền URL và Key hợp lệ)
+const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY) 
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
+  : null;
 
 const defaultSubjects = [
   {
@@ -13,8 +25,9 @@ const defaultSubjects = [
 Tính đóng gói là một trong bốn trụ cột cơ bản của Lập trình Hướng đối tượng (OOP). Nó đóng vai trò như một lớp áo giáp bảo vệ dữ liệu bên trong đối tượng khỏi những tác động thay đổi bất hợp pháp từ bên ngoài.
 
 ✦ 2. Bản chất chi tiết & Cách hoạt động:
-- Trong thực tế, giống như một viên thuốc con nhộng che giấu các thành phần dược liệu bên trong, trong lập trình, các thuộc tính (dữ liệu) của class sẽ được khai báo ở chế độ riêng tư (private).
-- Để bên ngoài có thể tương tác hoặc thay đổi dữ liệu đó một cách có kiểm soát, lập trình viên phải thông qua các phương thức công khai (public methods) được gọi là Getter (để lấy giá trị) và Setter (để gán/kiểm tra giá trị hợp lệ trước khi lưu).`
+- Trong thực tế, các thuộc tính (dữ liệu) của class sẽ được khai báo ở chế độ riêng tư (private).
+- Để bên ngoài có thể tương tác hoặc thay đổi dữ liệu đó một cách có kiểm soát, lập trình viên phải thông qua các phương thức công khai (public methods) được gọi là Getter và Setter.`,
+        videos: []
       }
     ]
   }
@@ -25,22 +38,22 @@ const defaultTimetable = [
   { id: 2, day: "Thứ Tư", time: "13:30 - 17:00", subject: "Cấu trúc dữ liệu và Giải thuật", room: "Phòng lý thuyết B3.4" },
 ];
 
-const generateAITeachingContent = (title) => {
+// Hàm dự phòng khi chưa cấu hình Gemini API Key
+const generateFallbackContent = (title) => {
   const t = title.trim();
   if (!t) return "";
-
   return `✦ 1. Tổng quan trọng tâm về "${t}":
-Đây là một chủ đề nền tảng và cốt lõi trong chương trình học. Việc nắm vững khái niệm này giúp cậu xây dựng tư duy logic chuẩn xác để giải quyết các bài tập trên lớp cũng như các bài toán thực tế sau này.
+Đây là một chủ đề nền tảng và cốt lõi trong chương trình học. Việc nắm vững khái niệm này giúp cậu xây dựng tư duy logic chuẩn xác.
 
 ✦ 2. Bản chất chi tiết & Cơ chế hoạt động:
-- Định nghĩa rõ ràng: ${t} bản chất là sự kết hợp giữa các thành phần lý thuyết cơ bản và các quy tắc vận hành logic.
-- Các bước triển khai chuẩn: Xác định bài toán cần giải quyết ➔ Thiết kế mô hình/thuật toán ➔ Viết mã nguồn kiểm chứng ➔ Tối ưu hóa hiệu suất.
+- Định nghĩa rõ ràng: ${t} là sự kết hợp giữa lý thuyết cơ bản và quy tắc vận hành logic.
+- Các bước triển khai: Xác định bài toán ➔ Thiết kế mô hình ➔ Viết mã nguồn kiểm chứng ➔ Tối ưu hóa.
 
-✦ 3. Ví dụ minh họa thực tế dễ hiểu:
-Hãy hình dung ${t} giống như cách chúng ta giải quyết một tình huống quen thuộc hằng ngày: chia nhỏ vấn đề lớn thành các bước xử lý đơn giản, tuần tự và có kiểm soát.
+✦ 3. Ví dụ minh họa thực tế:
+Chia nhỏ vấn đề lớn thành các bước xử lý đơn giản, tuần tự và có kiểm soát để tránh lỗi logic.
 
-✦ 4. Lời khuyên ôn tập:
-- Đừng chỉ học vẹt lý thuyết, hãy tự viết lại định nghĩa bằng ngôn ngữ của chính mình và kết hợp xem video hướng dẫn bên dưới nhé!`;
+✦ 4. Lưu ý ôn thi:
+Nắm vững định nghĩa cốt lõi, độ phức tạp (nếu có) và thực hành viết code/bài tập mẫu.`;
 };
 
 const themes = [
@@ -52,95 +65,32 @@ const themes = [
 ];
 
 export default function StudyDiary() {
-  // Quản lý trạng thái tài khoản đang đăng nhập
   const [currentUser, setCurrentUser] = useState(() => {
     return localStorage.getItem("study_diary_current_user") || null;
   });
 
-  const [authMode, setAuthMode] = useState("login"); // "login" hoặc "register"
+  const [authMode, setAuthMode] = useState("login");
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [activeTab, setActiveTab] = useState("diary");
-
-  // Dữ liệu cá nhân hóa theo tài khoản hiện tại
-  const [currentTheme, setCurrentTheme] = useState(() => {
-    const user = localStorage.getItem("study_diary_current_user");
-    if (user) {
-      const savedTheme = localStorage.getItem(`study_diary_theme_${user}`);
-      if (savedTheme) return JSON.parse(savedTheme);
-    }
-    return themes[0];
-  });
-
-  const [subjects, setSubjects] = useState(() => {
-    const user = localStorage.getItem("study_diary_current_user");
-    if (user) {
-      const saved = localStorage.getItem(`study_diary_subjects_${user}`);
-      if (saved) return JSON.parse(saved);
-    }
-    return defaultSubjects;
-  });
-
-  const [timetable, setTimetable] = useState(() => {
-    const user = localStorage.getItem("study_diary_current_user");
-    if (user) {
-      const saved = localStorage.getItem(`study_diary_timetable_${user}`);
-      if (saved) return JSON.parse(saved);
-    }
-    return defaultTimetable;
-  });
-
-  // Khi chuyển tài khoản hoặc đăng nhập thành công, load lại dữ liệu tương ứng của user đó
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem("study_diary_current_user", currentUser);
-      
-      const savedTheme = localStorage.getItem(`study_diary_theme_${currentUser}`);
-      if (savedTheme) setCurrentTheme(JSON.parse(savedTheme));
-
-      const savedSubs = localStorage.getItem(`study_diary_subjects_${currentUser}`);
-      if (savedSubs) setSubjects(JSON.parse(savedSubs));
-      else setSubjects(defaultSubjects);
-
-      const savedTt = localStorage.getItem(`study_diary_timetable_${currentUser}`);
-      if (savedTt) setTimetable(JSON.parse(savedTt));
-      else setTimetable(defaultTimetable);
-    } else {
-      localStorage.removeItem("study_diary_current_user");
-    }
-  }, [currentUser]);
-
-  // Tự động lưu dữ liệu riêng cho tài khoản đang hoạt động
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(`study_diary_theme_${currentUser}`, JSON.stringify(currentTheme));
-    }
-  }, [currentTheme, currentUser]);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(`study_diary_subjects_${currentUser}`, JSON.stringify(subjects));
-    }
-  }, [subjects, currentUser]);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(`study_diary_timetable_${currentUser}`, JSON.stringify(timetable));
-    }
-  }, [timetable, currentUser]);
+  const [currentTheme, setCurrentTheme] = useState(themes[0]);
+  const [subjects, setSubjects] = useState(defaultSubjects);
+  const [timetable, setTimetable] = useState(defaultTimetable);
 
   const [newSubjectName, setNewSubjectName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeSubjectId, setActiveSubjectId] = useState(null);
 
-  // Form bài học
+  // Form bài học & Trạng thái Loading AI
   const [newDate, setNewDate] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [expandedEntries, setExpandedEntries] = useState({ 101: true });
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   // Form Thời khóa biểu
   const [ttDay, setTtDay] = useState("Thứ Hai");
@@ -148,8 +98,154 @@ export default function StudyDiary() {
   const [ttSubject, setTtSubject] = useState("");
   const [ttRoom, setTtRoom] = useState("");
 
-  // Xử lý Đăng ký / Đăng nhập
-  const handleAuthSubmit = (e) => {
+  // ==========================================
+  // TÍCH HỢP 1: GOOGLE GEMINI API (GIẢNG BÀI)
+  // ==========================================
+  const fetchGeminiLecture = async (subjectName, lessonTitle) => {
+    if (!lessonTitle.trim()) return;
+    setIsGeneratingAI(true);
+
+    if (!GEMINI_API_KEY) {
+      // Nếu chưa có API Key trong .env thì dùng hàm giả lập
+      setTimeout(() => {
+        setNewContent(generateFallbackContent(lessonTitle));
+        setIsGeneratingAI(false);
+      }, 400);
+      return;
+    }
+
+    try {
+      const prompt = `Bạn là một giảng viên đại học xuất sắc ngành Công nghệ thông tin. Hãy giảng giải chi tiết, dễ hiểu cho sinh viên về chủ đề "${lessonTitle}" thuộc môn học "${subjectName}". 
+Trình bày rõ ràng theo đúng 4 mục sau (sử dụng ký hiệu ✦ ở đầu mỗi mục, không dùng cú pháp markdown phức tạp như ** hay ##):
+✦ 1. Tổng quan trọng tâm:
+✦ 2. Bản chất chi tiết & Cơ chế hoạt động:
+✦ 3. Ví dụ minh họa thực tế (hoặc mã giả/code ngắn gọn nếu có):
+✦ 4. Lưu ý quan trọng khi ôn thi:`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        }
+      );
+
+      const data = await response.json();
+      const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (aiText) {
+        setNewContent(aiText.trim());
+      } else {
+        setNewContent(generateFallbackContent(lessonTitle));
+      }
+    } catch (error) {
+      console.error("Lỗi gọi Gemini API:", error);
+      setNewContent(generateFallbackContent(lessonTitle));
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
+  // ==========================================
+  // TÍCH HỢP 2: YOUTUBE DATA API V3 (TÌM VIDEO)
+  // ==========================================
+  const fetchYouTubeVideos = async (queryTitle) => {
+    if (!YOUTUBE_API_KEY || !queryTitle.trim()) return [];
+    try {
+      const q = encodeURIComponent(`${queryTitle} bài giảng lập trình`);
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=2&q=${q}&type=video&key=${YOUTUBE_API_KEY}`
+      );
+      const data = await res.json();
+      if (data.items) {
+        return data.items.map(item => ({
+          videoId: item.id.videoId,
+          title: item.snippet.title,
+          channel: item.snippet.channelTitle
+        }));
+      }
+      return [];
+    } catch (err) {
+      console.error("Lỗi gọi YouTube API:", err);
+      return [];
+    }
+  };
+
+  // ==========================================
+  // TÍCH HỢP 3: SUPABASE CLOUD & LOCALSTORAGE
+  // ==========================================
+  // Tải dữ liệu khi đăng nhập
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!currentUser) {
+        localStorage.removeItem("study_diary_current_user");
+        return;
+      }
+      localStorage.setItem("study_diary_current_user", currentUser);
+
+      // Ưu tiên tải từ Supabase nếu đã cấu hình
+      if (supabase) {
+        setIsSyncing(true);
+        const { data, error } = await supabase
+          .from("user_workspace")
+          .select("*")
+          .eq("username", currentUser)
+          .single();
+
+        if (!error && data) {
+          if (data.theme) setCurrentTheme(data.theme);
+          if (data.subjects) setSubjects(data.subjects);
+          if (data.timetable) setTimetable(data.timetable);
+          setIsSyncing(false);
+          return;
+        }
+        setIsSyncing(false);
+      }
+
+      // Dự phòng tải từ localStorage
+      const savedTheme = localStorage.getItem(`study_diary_theme_${currentUser}`);
+      if (savedTheme) setCurrentTheme(JSON.parse(savedTheme));
+
+      const savedSubs = localStorage.getItem(`study_diary_subjects_${currentUser}`);
+      setSubjects(savedSubs ? JSON.parse(savedSubs) : defaultSubjects);
+
+      const savedTt = localStorage.getItem(`study_diary_timetable_${currentUser}`);
+      setTimetable(savedTt ? JSON.parse(savedTt) : defaultTimetable);
+    };
+
+    loadUserData();
+  }, [currentUser]);
+
+  // Lưu dữ liệu tự động mỗi khi có thay đổi
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // Lưu vào localStorage ngay lập tức
+    localStorage.setItem(`study_diary_theme_${currentUser}`, JSON.stringify(currentTheme));
+    localStorage.setItem(`study_diary_subjects_${currentUser}`, JSON.stringify(subjects));
+    localStorage.setItem(`study_diary_timetable_${currentUser}`, JSON.stringify(timetable));
+
+    // Đồng bộ ngầm lên Supabase Cloud
+    if (supabase) {
+      const syncToCloud = async () => {
+        await supabase
+          .from("user_workspace")
+          .update({
+            theme: currentTheme,
+            subjects: subjects,
+            timetable: timetable,
+            updated_at: new Date().toISOString()
+          })
+          .eq("username", currentUser);
+      };
+      syncToCloud();
+    }
+  }, [currentTheme, subjects, timetable, currentUser]);
+
+  // Xử lý Đăng ký / Đăng nhập (Hỗ trợ cả Supabase lẫn LocalStorage)
+  const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setAuthError("");
     const user = usernameInput.trim();
@@ -160,25 +256,73 @@ export default function StudyDiary() {
       return;
     }
 
-    const usersDb = JSON.parse(localStorage.getItem("study_diary_users_db") || "{}");
+    if (supabase) {
+      setIsSyncing(true);
+      if (authMode === "register") {
+        const { data: existing } = await supabase
+          .from("user_workspace")
+          .select("username")
+          .eq("username", user)
+          .single();
 
-    if (authMode === "register") {
-      if (usersDb[user]) {
-        setAuthError("Tên tài khoản này đã tồn tại, vui lòng chọn tên khác!");
-        return;
+        if (existing) {
+          setAuthError("Tên tài khoản này đã tồn tại trên hệ thống!");
+          setIsSyncing(false);
+          return;
+        }
+
+        const { error } = await supabase.from("user_workspace").insert([
+          {
+            username: user,
+            password: pass,
+            theme: themes[0],
+            subjects: defaultSubjects,
+            timetable: defaultTimetable
+          }
+        ]);
+
+        if (error) {
+          setAuthError("Lỗi tạo tài khoản trên Cloud, vui lòng thử lại!");
+          setIsSyncing(false);
+          return;
+        }
+        setCurrentUser(user);
+      } else {
+        const { data, error } = await supabase
+          .from("user_workspace")
+          .select("*")
+          .eq("username", user)
+          .eq("password", pass)
+          .single();
+
+        if (error || !data) {
+          setAuthError("Tên tài khoản hoặc mật khẩu không chính xác!");
+          setIsSyncing(false);
+          return;
+        }
+        setCurrentUser(user);
       }
-      // Lưu tài khoản mới
-      usersDb[user] = pass;
-      localStorage.setItem("study_diary_users_db", JSON.stringify(usersDb));
-      setCurrentUser(user);
+      setIsSyncing(false);
     } else {
-      // Đăng nhập
-      if (!usersDb[user] || usersDb[user] !== pass) {
-        setAuthError("Tên tài khoản hoặc mật khẩu không chính xác!");
-        return;
+      // Chế độ LocalStorage khi chưa điền Supabase Key
+      const usersDb = JSON.parse(localStorage.getItem("study_diary_users_db") || "{}");
+      if (authMode === "register") {
+        if (usersDb[user]) {
+          setAuthError("Tên tài khoản này đã tồn tại!");
+          return;
+        }
+        usersDb[user] = pass;
+        localStorage.setItem("study_diary_users_db", JSON.stringify(usersDb));
+        setCurrentUser(user);
+      } else {
+        if (!usersDb[user] || usersDb[user] !== pass) {
+          setAuthError("Tên tài khoản hoặc mật khẩu không chính xác!");
+          return;
+        }
+        setCurrentUser(user);
       }
-      setCurrentUser(user);
     }
+
     setUsernameInput("");
     setPasswordInput("");
   };
@@ -204,10 +348,8 @@ export default function StudyDiary() {
   const handleTitleChange = (e) => {
     const val = e.target.value;
     setNewTitle(val);
-    if (!editingEntryId && val.trim().length > 2) {
-      setNewContent(generateAITeachingContent(val));
-    } else if (!editingEntryId) {
-      setNewContent("");
+    if (!editingEntryId && !GEMINI_API_KEY && val.trim().length > 2) {
+      setNewContent(generateFallbackContent(val));
     }
   };
 
@@ -227,9 +369,15 @@ export default function StudyDiary() {
     setNewContent(entry.content);
   };
 
-  const handleSaveEntry = (e, subjectId) => {
+  const handleSaveEntry = async (e, subjectId) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
+
+    // Tự động tìm video YouTube thực tế khi lưu bài học mới
+    let fetchedVideos = [];
+    if (!editingEntryId && YOUTUBE_API_KEY) {
+      fetchedVideos = await fetchYouTubeVideos(newTitle.trim());
+    }
 
     setSubjects(subjects.map(sub => {
       if (sub.id === subjectId) {
@@ -246,7 +394,8 @@ export default function StudyDiary() {
             id: newEntryId,
             date: newDate.trim() || new Date().toLocaleDateString("vi-VN"),
             title: newTitle.trim(),
-            content: newContent.trim() || generateAITeachingContent(newTitle)
+            content: newContent.trim() || generateFallbackContent(newTitle),
+            videos: fetchedVideos
           };
           setExpandedEntries(prev => ({ ...prev, [newEntryId]: true }));
           return { ...sub, entries: [newEntry, ...sub.entries] };
@@ -308,12 +457,13 @@ export default function StudyDiary() {
 
   const daysOfWeek = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
 
-  // Nếu chưa đăng nhập, hiển thị màn hình Đăng nhập / Đăng ký
   if (!currentUser) {
     return (
       <div style={styles.authContainer}>
         <div style={styles.authCard}>
-          <div style={styles.headerBadge}>Workspace cá nhân</div>
+          <div style={styles.headerBadge}>
+            {supabase ? "Cloud Sync Active" : "Local Workspace"}
+          </div>
           <h1 style={styles.authTitle}>Nhật ký Học tập</h1>
           <p style={styles.authSubtitle}>Đăng nhập để quản lý không gian học tập riêng của cậu</p>
 
@@ -348,8 +498,8 @@ export default function StudyDiary() {
               onChange={(e) => setPasswordInput(e.target.value)}
               style={styles.input}
             />
-            <button type="submit" style={styles.authSubmitBtn}>
-              {authMode === "login" ? "Vào không gian học tập" : "Tạo tài khoản mới"}
+            <button type="submit" disabled={isSyncing} style={styles.authSubmitBtn}>
+              {isSyncing ? "Đang kết nối..." : (authMode === "login" ? "Vào không gian học tập" : "Tạo tài khoản mới")}
             </button>
           </form>
         </div>
@@ -388,7 +538,7 @@ export default function StudyDiary() {
 
           <div style={styles.topRightControls}>
             <div style={styles.userBadgeInfo}>
-              👤 <b>{currentUser}</b>
+              <span>Tài khoản: <b>{currentUser}</b></span>
               <button onClick={handleLogout} style={styles.logoutBtn}>Đăng xuất</button>
             </div>
 
@@ -412,7 +562,9 @@ export default function StudyDiary() {
           </div>
         </div>
 
-        <div style={styles.headerBadge}>Workspace cá nhân</div>
+        <div style={styles.headerBadge}>
+          {supabase ? "Đã kết nối Supabase Cloud" : "Lưu trữ Trình duyệt"}
+        </div>
         <h1 style={styles.headerTitle}>Nhật ký Học tập & Lịch trình</h1>
         <p style={styles.headerSubtitle}>Học đi nếu kh muốn rớt môn</p>
 
@@ -478,9 +630,24 @@ export default function StudyDiary() {
 
                   {isAddingOrEditing && (
                     <form onSubmit={(e) => handleSaveEntry(e, sub.id)} style={styles.entryForm}>
-                      <h3 style={styles.formTitle}>
-                        {editingEntryId ? "Chỉnh sửa bài học" : "Thêm bài học mới"}
-                      </h3>
+                      <div style={styles.formHeaderRow}>
+                        <h3 style={styles.formTitle}>
+                          {editingEntryId ? "Chỉnh sửa bài học" : "Thêm bài học mới"}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => fetchGeminiLecture(sub.name, newTitle)}
+                          disabled={isGeneratingAI || !newTitle.trim()}
+                          style={{
+                            ...styles.aiGenerateBtn,
+                            backgroundColor: currentTheme.primary,
+                            opacity: (!newTitle.trim() || isGeneratingAI) ? 0.6 : 1
+                          }}
+                        >
+                          {isGeneratingAI ? "Gemini đang biên soạn bài giảng..." : "Nhờ Gemini AI giảng chi tiết"}
+                        </button>
+                      </div>
+
                       <div style={styles.formRow}>
                         <input 
                           type="text"
@@ -491,14 +658,14 @@ export default function StudyDiary() {
                         />
                         <input 
                           type="text"
-                          placeholder="Nhập tiêu đề bài học (AI tự động viết nội dung)..."
+                          placeholder="Nhập tiêu đề bài học rồi bấm nút Gemini giảng bài..."
                           value={newTitle}
                           onChange={handleTitleChange}
                           style={{ ...styles.input, flex: 1 }}
                         />
                       </div>
                       <textarea 
-                        placeholder="Nội dung bài giảng chi tiết..."
+                        placeholder="Nội dung bài giảng chi tiết từ Gemini AI sẽ xuất hiện tại đây..."
                         value={newContent}
                         onChange={(e) => setNewContent(e.target.value)}
                         style={styles.textarea}
@@ -556,15 +723,35 @@ export default function StudyDiary() {
                                   <p style={styles.entryContent}>{entry.content}</p>
                                 </div>
 
+                                {/* Hiển thị danh sách Video gợi ý từ YouTube API (nếu có) */}
+                                {entry.videos && entry.videos.length > 0 && (
+                                  <div style={styles.ytVideosBox}>
+                                    <span style={styles.linksLabel}>Video bài giảng tìm thấy từ YouTube API:</span>
+                                    <div style={styles.ytList}>
+                                      {entry.videos.map((vid, idx) => (
+                                        <a
+                                          key={idx}
+                                          href={`https://www.youtube.com/watch?v=${vid.videoId}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          style={{ ...styles.ytItemLink, color: currentTheme.primary }}
+                                        >
+                                          ▶ {vid.title} ({vid.channel}) ↗
+                                        </a>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
                                 <div style={styles.linksSection}>
-                                  <span style={styles.linksLabel}>Tài liệu tra cứu & Video học tập:</span>
+                                  <span style={styles.linksLabel}>Tài liệu tra cứu & Tìm kiếm mở rộng:</span>
                                   <div style={styles.linksRow}>
                                     <a href={googleSearchUrl} target="_blank" rel="noopener noreferrer" style={{ ...styles.linkAnchor, color: currentTheme.primary }}>
                                       Tìm tài liệu Google ↗
                                     </a>
                                     <span style={styles.dot}>·</span>
                                     <a href={youtubeSearchUrl} target="_blank" rel="noopener noreferrer" style={{ ...styles.linkAnchor, color: currentTheme.primary }}>
-                                      Xem video YouTube ↗
+                                      Danh sách phát YouTube ↗
                                     </a>
                                   </div>
                                 </div>
@@ -893,7 +1080,7 @@ const styles = {
     border: '1px solid #E2E8F0',
     backgroundColor: '#FFFFFF',
     fontSize: '14px',
-    minHeight: '160px',
+    minHeight: '180px',
     outline: 'none',
     resize: 'vertical',
     lineHeight: '1.6'
@@ -992,11 +1179,27 @@ const styles = {
     gap: '14px',
     marginBottom: '24px'
   },
+  formHeaderRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '10px'
+  },
   formTitle: {
     fontSize: '15px',
     fontWeight: '700',
-    margin: '0 0 4px 0',
+    margin: 0,
     color: '#2D3748'
+  },
+  aiGenerateBtn: {
+    padding: '6px 12px',
+    borderRadius: '6px',
+    border: 'none',
+    color: '#FFFFFF',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer'
   },
   formRow: {
     display: 'flex',
@@ -1103,6 +1306,26 @@ const styles = {
     color: '#2D3748',
     margin: 0,
     whiteSpace: 'pre-line'
+  },
+  ytVideosBox: {
+    backgroundColor: '#FFFFFF',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    border: '1px solid #E2E8F0',
+    marginBottom: '14px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  ytList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  },
+  ytItemLink: {
+    fontSize: '13px',
+    textDecoration: 'none',
+    fontWeight: '600'
   },
   linksSection: {
     display: 'flex',
